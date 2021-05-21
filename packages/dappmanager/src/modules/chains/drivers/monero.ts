@@ -22,6 +22,8 @@ const MIN_BLOCK_DIFF_SYNC = 15;
 export async function monero(
   dnp: InstalledPackageData
 ): Promise<ChainDataResult> {
+
+  if(dnp.containers.length>1) throw Error("this package has more than 1 service");
   const container = dnp.containers[0];
   if (!container) throw Error("no container");
   const containerDomain = getPrivateNetworkAlias(container);

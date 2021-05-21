@@ -25,6 +25,9 @@ const gethSyncHelpUrl = whyDoesGethTakesSoMuchToSync;
 export async function ethereum(
   dnp: InstalledPackageData
 ): Promise<ChainDataResult> {
+
+  if(dnp.containers.length>1) throw Error();
+  
   const container = dnp.containers[0];
   if (!container) throw Error("no container");
   const containerDomain = getPrivateNetworkAlias(container);
