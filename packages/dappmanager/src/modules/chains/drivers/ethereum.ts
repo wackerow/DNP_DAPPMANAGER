@@ -26,8 +26,8 @@ export async function ethereum(
   dnp: InstalledPackageData
 ): Promise<ChainDataResult> {
 
-  if(dnp.containers.length>1) throw Error();
-  
+  if(dnp.containers.length>1) throw Error("this package has more than 1 service");
+
   const container = dnp.containers[0];
   if (!container) throw Error("no container");
   const containerDomain = getPrivateNetworkAlias(container);
