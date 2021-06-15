@@ -1,10 +1,11 @@
 import { ethers } from "ethers";
-import { InstalledPackageData } from "../../../common";
+import { chainDrivers, InstalledPackageData } from "../../../common";
 import { whyDoesGethTakesSoMuchToSync } from "../../../externalLinks";
 import { EthSyncing, parseEthersSyncing } from "../../../utils/ethers";
 import { getPrivateNetworkAlias } from "../../../domains";
 import { ChainDataResult } from "../types";
-import { safeProgress } from "../utils";
+import { getApiUrl, safeProgress, searchContainerByService } from "../utils";
+import { changeEthMultiClient } from "../../ethClient";
 
 const MIN_BLOCK_DIFF_SYNC = 60;
 const gethSyncHelpUrl = whyDoesGethTakesSoMuchToSync;
@@ -22,15 +23,26 @@ const gethSyncHelpUrl = whyDoesGethTakesSoMuchToSync;
  *   error: true {bool},
  * }
  */
+
 export async function ethereum(
   dnp: InstalledPackageData
 ): Promise<ChainDataResult> {
-  const container = dnp.containers[0];
-  if (!container) throw Error("no container");
-  const containerDomain = getPrivateNetworkAlias(container);
+  const chainObject = dnp;
+
+  // Check if the manifest has defined the field chain, we define 2 cases:
+  // 1. Multiservice package: package should define the object on the manifest explaining : preser,service and ports
+  // 2. Package with 1 service: package define chain field as string. Automatically the way dappmanager can detect from where it has to collect the data.
+
+  console.log(
+    `ethereum: package ${dnp.dnpName} typeofresult ${typeof chainObject.chain}`
+  );
+
+  const apiUrl = getApiUrl(chainObject, 8545);
+
+  console.log("URL generate with generate getApiUrl: ", getApiUrl);
 
   // http://ropsten.dappnode:8545
-  const apiUrl = `http://${containerDomain}:8545`;
+  //const apiUrl = `http://${containerDomain}:8545`;
 
   const provider = new ethers.providers.JsonRpcProvider(apiUrl);
   const [syncing, blockNumber] = await Promise.all([

@@ -400,17 +400,25 @@ export type ContainerState =
   | "exited" // exited A container that ran and completed("stopped" in other contexts, although a created container is technically also "stopped")
   | "dead"; // dead A container that the daemon tried and failed to stop(usually due to a busy device or resource used by the container)
 
-export type ChainDriver =
+export type Type =
   | "bitcoin"
   | "ethereum"
   | "ethereum2-beacon-chain-prysm"
   | "monero";
-export const chainDrivers: ChainDriver[] = [
+export const Types: Type[] = [
   "bitcoin",
   "ethereum",
   "ethereum2-beacon-chain-prysm",
   "monero"
 ];
+
+export type ChainDriver =
+  | Type
+  | {
+      preset: Type;
+      service?: string;
+      port?: number;
+    };
 
 /**
  * Type mapping of a package container labels
