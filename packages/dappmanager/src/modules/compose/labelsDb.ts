@@ -8,6 +8,7 @@ import {
 import { stringifyEnvironment } from "./environment";
 import { ComposeService } from "../../common";
 import { pick, omitBy, mapValues } from "lodash";
+import { Type } from "js-yaml";
 
 /**
  * This module ensures that data stored in a DNP's container labels
@@ -27,14 +28,23 @@ const parseJsonSafe = <T>(value: string | undefined): T | undefined => {
     } catch {}
 };
 
+const parseChainDriver = (
+  value: string | object | undefined
+): ChainDriver | undefined => {
+  const aux: Type = "hola";
+  const res: ChainDriver = aux;
+  return res;
+};
+
 const writeString = (data: string | undefined): string | undefined => data;
 const writeNumber = (num: number | undefined): string | undefined =>
   num === undefined ? undefined : String(num);
 const writeBool = (data: boolean | undefined): string | undefined =>
   data === true ? "true" : data === false ? "false" : undefined;
-const writeJson = (data: object | string[]): string => JSON.stringify(data);
+const writeJson = (data: object | string[] | string): string =>
+  JSON.stringify(data);
 
-const labelParseFns: {
+export const labelParseFns: {
   [K in keyof Required<ContainerLabelTypes>]: (
     labelValue: string | undefined
   ) => ContainerLabelTypes[K] | undefined;
@@ -46,10 +56,12 @@ const labelParseFns: {
   "dappnode.dnp.dependencies": value => parseJsonSafe(value) || {},
   "dappnode.dnp.avatar": parseString,
   "dappnode.dnp.origin": parseString,
-  "dappnode.dnp.chain": value =>
-    value && chainDrivers.includes(value as ChainDriver)
-      ? (value as ChainDriver)
-      : undefined,
+  // "dappnode.dnp.chain": value =>{
+  // value && chainDrivers.includes(value as ChainDriver)
+  //? (value as ChainDriver)
+  //: undefined,
+  //},
+  "dappnode.dnp.chain": parseChainDriver,
   "dappnode.dnp.isCore": parseBool,
   "dappnode.dnp.isMain": parseBool,
   "dappnode.dnp.dockerTimeout": parseNumber,
@@ -58,7 +70,7 @@ const labelParseFns: {
   "dappnode.dnp.default.volumes": value => parseJsonSafe(value)
 };
 
-const labelStringifyFns: {
+export const labelStringifyFns: {
   [K in keyof Required<ContainerLabelTypes>]: (
     data: ContainerLabelTypes[K]
   ) => string | undefined;
@@ -70,7 +82,7 @@ const labelStringifyFns: {
   "dappnode.dnp.dependencies": writeJson,
   "dappnode.dnp.avatar": writeString,
   "dappnode.dnp.origin": writeString,
-  "dappnode.dnp.chain": writeString,
+  "dappnode.dnp.chain": writeJson,
   "dappnode.dnp.isCore": writeBool,
   "dappnode.dnp.isMain": writeBool,
   "dappnode.dnp.dockerTimeout": writeNumber,
