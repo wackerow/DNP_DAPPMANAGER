@@ -54,6 +54,7 @@ describe("IPFS remote mallicious gateway", function () {
       const rawFileDirPath = dirPath + fileName;
       // API Server
       let server: http.Server;
+      const port = 3030;
 
       beforeAndAfter("Clean files", async () => {
         await createTestDir();
@@ -80,16 +81,28 @@ describe("IPFS remote mallicious gateway", function () {
       });
 
       before(() => {
-        server = http.createServer(async (req, res) => {
-          console.log(req.url);
-          if (req.url === "/api/v0/dag/export/test") {
-            const inStream = fs.createReadStream(carFilePath);
+        server = http
+          .createServer(async (req, res) => {
+            if (
+              req.url !==
+              "/api/v0/dag/export?arg=QmZgyqhA6so3FjCtJC7gN6Ybuua8YVBWzYppdAnEBFAZCr"
+            ) {
+              res.writeHead(500, `wrong hash: ${req.url}`);
+              res.end();
+              return;
+            }
 
-            // const carReader = await CarReader.fromIterable(inStream);
+            const inStream = fs.createReadStream(carFilePath);
+            // Reserva en memoria x bytes
+            const data = Buffer.alloc(10e9, 0xaa);
+            // convertir data en car
+            //const carReader = new CarReader()
+            res.write(data);
+            res.end();
+            const carReader = await CarReader.fromIterable(inStream);
             inStream.pipe(res);
-          }
-        });
-        server.listen(3030);
+          })
+          .listen(port);
       });
 
       after(() => {
@@ -97,13 +110,10 @@ describe("IPFS remote mallicious gateway", function () {
       });
 
       it.only("Should get CAR content from fake IPFS gateway", async () => {
-        ipfs.changeHost("http://localhost:3030", IpfsClientTarget.remote);
-        const carReader = await CarReader.fromBytes(
-          new Uint8Array(Buffer.from(fs.readFileSync(rawFilePath, "utf-8")))
+        ipfs.changeHost(`http://localhost:${port}`, IpfsClientTarget.remote);
+        const data = await ipfs.writeFileToMemory(
+          "QmZgyqhA6so3FjCtJC7gN6Ybuua8YVBWzYppdAnEBFAZCr"
         );
-        const root = await carReader.getRoots();
-        console.log(root);
-        //const data = await ipfs.writeFileToMemory("test");
       });
 
       it("can pack from a readable stream", async () => {
