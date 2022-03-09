@@ -6,21 +6,18 @@ import { getPrivateNetworkAlias } from "../../domains";
 import {
   dockerComposeUp,
   dockerContainerInspect,
+  dockerCreateNetwork,
+  dockerListNetworks,
   dockerNetworkConnect,
   dockerNetworkDisconnect
 } from "../docker";
 import { listContainers } from "../docker/list";
 import Dockerode from "dockerode";
-import shell from "../../utils/shell";
 import * as getPath from "../../utils/getPath";
 import { ComposeFileEditor } from "../compose/editor";
 import { PackageContainer } from "../../types";
 import { parseServiceNetworks } from "../compose/networks";
-import { ComposeNetwork, ComposeServiceNetwork } from "../../common";
 import { parseComposeSemver } from "../../utils/sanitizeVersion";
-
-/** Alias for code succinctness */
-const dncoreNetworkName = params.DNP_PRIVATE_NETWORK_NAME;
 
 /**
  * DAPPMANAGER updates from <= v0.2.38 must manually add aliases
@@ -29,42 +26,57 @@ const dncoreNetworkName = params.DNP_PRIVATE_NETWORK_NAME;
  * and do docker inspect.
  */
 export async function addAliasToRunningContainersMigration(): Promise<void> {
-  for (const container of await listContainers()) {
-    const containerName = container.containerName;
-    const alias = getPrivateNetworkAlias(container);
+  const containers = await listContainers();
+  const networks = await dockerListNetworks();
+  const networkNames = new Set(networks.map(n => n.Name));
 
-    try {
-      // Info from docker inspect and compose file might be not-syncrhnonyzed
-      // So this function must be before the check hasAlias()
-      migrateCoreNetworkAndAliasInCompose(container, alias);
+  for (const { networkName, ipamConfig } of [
+    // dnprivate_network
+    {
+      networkName: params.DNP_PRIVATE_NETWORK_NAME,
+      ipamConfig: params.DNP_PRIVATE_NETWORK_IPAM_CONFIG
+    },
+    // dncore_network
+    {
+      networkName: params.DNP_NEXT_PRIVATE_NETWORK_NAME,
+      ipamConfig: params.DNP_NEXT_PRIVATE_NETWORK_IPAM_CONFIG
+    }
+  ]) {
+    // Ensure private network exists
+    if (!networkNames.has(networkName)) {
+      logs.info(`Created new network ${networkName}`);
+      await dockerCreateNetwork(networkName, ipamConfig);
+    }
 
-      const currentEndpointConfig = await getEndpointConfig(containerName);
-      if (hasAlias(currentEndpointConfig, alias)) continue;
-      const endpointConfig: Partial<Dockerode.NetworkInfo> = {
-        ...currentEndpointConfig,
-        Aliases: [...(currentEndpointConfig?.Aliases || []), alias]
-      };
+    for (const container of containers) {
+      // For each container and private network:
+      // 1. Add new network + alias in compose if not there
+      // 2. Connect to new network w/ alias if not connected
 
-      // Wifi and VPN containers needs a refresh connect due to its own network configuration
-      if (
-        container.containerName === params.vpnContainerName ||
-        container.containerName === params.wifiContainerName
-      ) {
-        await shell(`docker rm ${containerName} --force`);
-        await dockerComposeUp(
-          getPath.dockerCompose(container.dnpName, container.isCore)
+      try {
+        // Info from docker inspect and compose file might be not-syncrhnonyzed
+        // So this function must be before the check hasAlias()
+        const alias = getPrivateNetworkAlias(container);
+        const migratedCompose = migrateNetworkAndAliasInCompose(
+          container,
+          networkName,
+          alias
         );
-      } else {
-        await dockerNetworkDisconnect(dncoreNetworkName, containerName);
-        await dockerNetworkConnect(
-          dncoreNetworkName,
-          containerName,
-          endpointConfig
+
+        if (migratedCompose)
+          logs.info(`Migrated compose alias ${networkName} ${alias}`);
+
+        const migratedContainer = await migrateNetworkAndAliasInLiveContainer(
+          container,
+          networkName,
+          alias
         );
+
+        if (migratedContainer)
+          logs.info(`Migrated container alias ${networkName} ${alias}`);
+      } catch (e) {
+        logs.error(`Error alias migrate ${container.containerName}`, e);
       }
-      logs.info(`Added alias to running container ${container.containerName}`);
-    } catch (e) {
-      logs.error(`Error adding alias to container ${containerName}`, e);
     }
   }
 }
@@ -84,26 +96,27 @@ export function hasAlias(
 
 /** Get endpoint config for DNP_PRIVATE_NETWORK_NAME */
 export async function getEndpointConfig(
-  containerName: string
+  containerName: string,
+  networkName: string
 ): Promise<Dockerode.NetworkInfo | null> {
   const inspectInfo = await dockerContainerInspect(containerName);
-  return inspectInfo.NetworkSettings.Networks[dncoreNetworkName] ?? null;
+  return inspectInfo.NetworkSettings.Networks[networkName] ?? null;
 }
 
 /**
  * Get compose file network and compose network settings from dncore_network
  * And rewrites the compose with the core network edited
+ * @returns true if it migrated
  */
-export function migrateCoreNetworkAndAliasInCompose(
+export function migrateNetworkAndAliasInCompose(
   container: PackageContainer,
+  networkName: string,
   alias: string
-): void {
+): boolean {
   const compose = new ComposeFileEditor(container.dnpName, container.isCore);
 
   // 1. Get compose network settings
-  const composeNetwork = compose.getComposeNetwork(
-    params.DNP_PRIVATE_NETWORK_NAME
-  );
+  const composeNetwork = compose.getComposeNetwork(networkName);
 
   // 2. Get compose service network settings
   const composeService = compose.services()[container.serviceName];
@@ -112,25 +125,32 @@ export function migrateCoreNetworkAndAliasInCompose(
     composeService.get().networks || {}
   );
 
-  const serviceNetwork =
-    serviceNetworks[params.DNP_PRIVATE_NETWORK_NAME_FROM_CORE] ?? null;
+  const serviceNetwork = serviceNetworks[networkName] ?? null;
 
   // 3. Check if migration was done
   if (
-    isComposeNetworkAndAliasMigrated(
-      composeNetwork,
-      serviceNetwork,
-      compose.compose.version,
-      alias
-    )
+    // 1. Migration undone for aliases or networks or both => return false
+    // Consider as not migrated if either composeNetwork or serviceNetwork are not present
+    composeNetwork &&
+    serviceNetwork &&
+    // Check property name is defined
+    composeNetwork?.name === params.DNP_PRIVATE_NETWORK_NAME &&
+    // Check is external network
+    composeNetwork?.external &&
+    // Check version is at least 3.5
+    semver.gte(
+      parseComposeSemver(compose.compose.version),
+      parseComposeSemver(params.MINIMUM_COMPOSE_VERSION)
+    ) &&
+    // Check alias has been added
+    serviceNetwork.aliases?.includes(alias)
   )
-    return;
+    return false;
 
   // 4. Ensure compose file version 3.5
-  compose.compose = {
-    ...compose.compose,
-    version: params.MINIMUM_COMPOSE_VERSION
-  };
+  if (compose.compose.version < params.MINIMUM_COMPOSE_VERSION) {
+    compose.compose.version = params.MINIMUM_COMPOSE_VERSION;
+  }
 
   // 5. Add network and alias
   if (composeNetwork || serviceNetwork)
@@ -139,33 +159,62 @@ export function migrateCoreNetworkAndAliasInCompose(
     composeService.removeNetwork(params.DNP_PRIVATE_NETWORK_NAME_FROM_CORE);
 
   const aliases = uniq([...(serviceNetwork?.aliases || []), alias]);
+
   composeService.addNetwork(
-    params.DNP_PRIVATE_NETWORK_NAME,
+    networkName,
     { ...serviceNetwork, aliases },
-    { external: true, name: params.DNP_PRIVATE_NETWORK_NAME } //...networkConfig,
+    { external: true, name: networkName } //...networkConfig,
   );
 
   compose.write();
+
+  return true;
 }
 
-function isComposeNetworkAndAliasMigrated(
-  composeNetwork: ComposeNetwork | null,
-  serviceNetwork: ComposeServiceNetwork | null,
-  composeVersion: string,
+/**
+ * On live running container connect to new network
+ * @returns true if it migrated
+ */
+async function migrateNetworkAndAliasInLiveContainer(
+  container: PackageContainer,
+  networkName: string,
   alias: string
-): boolean {
-  // 1. Migration undone for aliases or networks or both => return false
-  if (!composeNetwork || !serviceNetwork) return false; // Consider as not migrated if either composeNetwork or serviceNetwork are not present
-  // 2. Migration done for aliases and networks => return true
+): Promise<boolean> {
+  const inspectInfo = await dockerContainerInspect(container.containerName);
+  const networkConfig =
+    inspectInfo.NetworkSettings.Networks[networkName] ?? null;
+
+  // Don't migrate if network config exists and has alias
   if (
-    composeNetwork?.name === params.DNP_PRIVATE_NETWORK_NAME && // Check property name is defined
-    composeNetwork?.external && // Check is external network
-    semver.gte(
-      parseComposeSemver(composeVersion),
-      parseComposeSemver(params.MINIMUM_COMPOSE_VERSION)
-    ) && // Check version is at least 3.5
-    serviceNetwork.aliases?.includes(alias) // Check alias has been added
-  )
-    return true;
-  return false; // In other cases return false
+    networkConfig &&
+    Array.isArray(networkConfig.Aliases) &&
+    networkConfig.Aliases.includes(alias)
+  ) {
+    return false;
+  }
+
+  const newNetworkConfig: Partial<Dockerode.NetworkInfo> = {
+    ...networkConfig,
+    Aliases: [...(networkConfig?.Aliases || []), alias]
+  };
+
+  // Wifi and VPN containers needs a refresh connect due to its own network configuration
+  if (
+    container.containerName === params.vpnContainerName ||
+    container.containerName === params.wifiContainerName
+  ) {
+    await dockerComposeUp(
+      getPath.dockerCompose(container.dnpName, container.isCore),
+      { forceRecreate: true }
+    );
+  } else {
+    await dockerNetworkDisconnect(networkName, container.containerName);
+    await dockerNetworkConnect(
+      networkName,
+      container.containerName,
+      newNetworkConfig
+    );
+  }
+
+  return true;
 }

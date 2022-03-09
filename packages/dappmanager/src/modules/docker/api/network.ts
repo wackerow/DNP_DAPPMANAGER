@@ -38,9 +38,24 @@ export async function dockerNetworkDisconnect(
 }
 
 /**
+ * https://docs.docker.com/engine/api/v1.41/#operation/NetworkCreate
+ */
+type DockerNetworkIPAMConfig = {
+  /** "172.20.0.0/16" */
+  Subnet: string;
+  /** "172.20.10.0/24" */
+  IPRange: string;
+  /** "172.20.10.11" */
+  Gateway: string;
+};
+
+/**
  * Create a new docker network
  */
-export async function dockerCreateNetwork(networkName: string): Promise<void> {
+export async function dockerCreateNetwork(
+  networkName: string,
+  IPAMConfig?: DockerNetworkIPAMConfig
+): Promise<void> {
   await docker.createNetwork({
     Name: networkName,
     // Check for networks with duplicate names. Since Network is primarily
@@ -52,7 +67,13 @@ export async function dockerCreateNetwork(networkName: string): Promise<void> {
     // collisions.
     CheckDuplicate: true,
     // Default plugin
-    Driver: "bridge"
+    Driver: "bridge",
+    IPAM: IPAMConfig
+      ? {
+          Driver: "default",
+          Config: [IPAMConfig]
+        }
+      : undefined
   });
 }
 

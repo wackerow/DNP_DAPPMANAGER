@@ -117,9 +117,19 @@ const params = {
 
   // Docker compose parameters
   DNS_SERVICE: "172.33.1.2",
-  DNP_PRIVATE_NETWORK_SUBNET: "172.33.0.0/16",
+  DNP_PRIVATE_NETWORK_IPAM_CONFIG: {
+    Subnet: "172.33.0.0/16",
+    IPRange: "172.33.0.0/16",
+    Gateway: "172.33.1.1"
+  },
   DNP_PRIVATE_NETWORK_NAME: "dncore_network",
   DNP_PRIVATE_NETWORK_NAME_FROM_CORE: "network",
+  DNP_NEXT_PRIVATE_NETWORK_NAME: "dnprivate_network",
+  DNP_NEXT_PRIVATE_NETWORK_IPAM_CONFIG: {
+    Subnet: "10.20.0.0/24",
+    IPRange: "10.20.0.0/24",
+    Gateway: "10.20.1.1"
+  },
   DNP_EXTERNAL_NETWORK_NAME: "dnpublic_network",
   // Use of new compose file feature: network name
   MINIMUM_COMPOSE_VERSION: "3.5",

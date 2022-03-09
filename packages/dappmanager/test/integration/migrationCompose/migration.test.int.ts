@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import fs from "fs";
 import { PackageContainer } from "../../../src/common";
-import { migrateCoreNetworkAndAliasInCompose } from "../../../src/modules/https-portal/migration";
+import { migrateNetworkAndAliasInCompose } from "../../../src/modules/https-portal/migration";
 import params from "../../../src/params";
 import { mockContainer, shellSafe } from "../../testUtils";
 
@@ -108,8 +108,9 @@ services:
         aliases:
           - dappmanager.dnp.dappnode.eth.test-migration.dappnode`;
 
-    migrateCoreNetworkAndAliasInCompose(
+    migrateNetworkAndAliasInCompose(
       container,
+      params.DNP_PRIVATE_NETWORK_NAME,
       "dappmanager.dnp.dappnode.eth.test-migration.dappnode"
     );
     const composeAfter = fs.readFileSync(
@@ -120,8 +121,9 @@ services:
   });
 
   it("Should do not do migration", async () => {
-    migrateCoreNetworkAndAliasInCompose(
+    migrateNetworkAndAliasInCompose(
       container,
+      params.DNP_PRIVATE_NETWORK_NAME,
       "dappmanager.dnp.dappnode.eth.test-migration.dappnode"
     );
     const composeAfter = fs.readFileSync(
