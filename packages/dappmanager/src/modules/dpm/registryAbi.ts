@@ -1,16 +1,5 @@
 export const registryAbi = [
   {
-    inputs: [
-      {
-        internalType: "string",
-        name: "_registryName",
-        type: "string"
-      }
-    ],
-    stateMutability: "nonpayable",
-    type: "constructor"
-  },
-  {
     anonymous: false,
     inputs: [
       {
@@ -140,9 +129,9 @@ export const registryAbi = [
       },
       {
         indexed: false,
-        internalType: "uint8",
+        internalType: "uint64",
         name: "flags",
-        type: "uint8"
+        type: "uint64"
       }
     ],
     name: "UpdateStatus",
@@ -226,9 +215,9 @@ export const registryAbi = [
         type: "address"
       },
       {
-        internalType: "uint8",
+        internalType: "uint64",
         name: "flags",
-        type: "uint8"
+        type: "uint64"
       }
     ],
     name: "addPackage",
@@ -275,9 +264,9 @@ export const registryAbi = [
       {
         components: [
           {
-            internalType: "uint8",
+            internalType: "uint64",
             name: "flags",
-            type: "uint8"
+            type: "uint64"
           },
           {
             internalType: "address",
@@ -438,6 +427,19 @@ export const registryAbi = [
     inputs: [
       {
         internalType: "string",
+        name: "_registryName",
+        type: "string"
+      }
+    ],
+    name: "initialize",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [
+      {
+        internalType: "string",
         name: "_name",
         type: "string"
       },
@@ -447,9 +449,9 @@ export const registryAbi = [
         type: "address"
       },
       {
-        internalType: "uint8",
+        internalType: "uint64",
         name: "_flags",
-        type: "uint8"
+        type: "uint64"
       }
     ],
     name: "newPackage",
@@ -476,9 +478,9 @@ export const registryAbi = [
         type: "address"
       },
       {
-        internalType: "uint8",
+        internalType: "uint64",
         name: "flags",
-        type: "uint8"
+        type: "uint64"
       },
       {
         internalType: "string",
@@ -486,9 +488,9 @@ export const registryAbi = [
         type: "string"
       },
       {
-        internalType: "string",
-        name: "_contentURI",
-        type: "string"
+        internalType: "string[]",
+        name: "_contentURIs",
+        type: "string[]"
       }
     ],
     name: "newPackageWithVersion",
@@ -545,9 +547,9 @@ export const registryAbi = [
     name: "packages",
     outputs: [
       {
-        internalType: "uint8",
+        internalType: "uint64",
         name: "flags",
-        type: "uint8"
+        type: "uint64"
       },
       {
         internalType: "address",
@@ -682,9 +684,9 @@ export const registryAbi = [
         type: "uint256"
       },
       {
-        internalType: "uint8",
+        internalType: "uint64",
         name: "flags",
-        type: "uint8"
+        type: "uint64"
       }
     ],
     name: "setPackageStatus",
