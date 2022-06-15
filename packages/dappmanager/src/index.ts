@@ -27,6 +27,7 @@ import { startDappmanager } from "./startDappmanager";
 import { addAliasToRunningContainersMigration } from "./modules/https-portal";
 import { copyHostServices } from "./modules/hostServices/copyHostServices";
 import { startAvahiDaemon } from "./daemons/avahi";
+import { dockerConfig } from "./modules/hostScripts/scripts/dockerConfig";
 
 const controller = new AbortController();
 
@@ -58,7 +59,9 @@ Promise.all([
   initializeDb().catch(e => logs.error("Error copying host scripts", e)), // Generate keypair, network stats, and run dyndns loop
   copyHostScripts().catch(e => logs.error("Error copying host scripts", e)) // Copy hostScripts
 ]).then(() =>
-  startAvahiDaemon().catch(e => logs.error("Error starting avahi daemon", e))
+  dockerConfig().catch(e => logs.error("Error creating docker configuration file", e))
+).then(() =>
+startAvahiDaemon().catch(e => logs.error("Error starting avahi daemon", e))
 ); // avahiDaemon uses a host script that must be copied before been initialized
 
 // Create the global env file

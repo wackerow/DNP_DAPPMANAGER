@@ -14,6 +14,7 @@ type ScriptName =
   | "detect_fs.sh"
   | "migrate_volume.sh"
   | "docker_engine_update.sh"
+  | "docker_config.sh"
   | "docker_compose_update.sh"
   | "collect_host_info.sh"
   | "host_update.sh"
