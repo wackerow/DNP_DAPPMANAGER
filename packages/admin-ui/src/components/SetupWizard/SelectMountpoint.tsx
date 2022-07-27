@@ -201,7 +201,7 @@ export default function SelectMountpoint({
 
       {mountpointsRequest.error && (
         <div className="change-mountpoint-error">
-          Error detecting mountpoints: {mountpointsRequest.error}
+          <>Error detecting mountpoints: {mountpointsRequest.error}</>
         </div>
       )}
     </>

@@ -78,8 +78,7 @@ export default function ChangeHostPassword({
             error: password2Error
           }
         ]}
-      />
-
+      ></InputForm>
       <BottomButtons
         onBack={onBack}
         onNext={isValid ? update : onNext}

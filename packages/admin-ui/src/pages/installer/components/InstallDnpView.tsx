@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { api } from "api";
 import { useDispatch } from "react-redux";
 import {
-  Switch,
+  Routes,
   Route,
-  Redirect,
-  withRouter,
+  Navigate,
+  useParams,
+  useNavigate,
   RouteComponentProps
 } from "react-router-dom";
 import { isEmpty, throttle } from "lodash";
@@ -331,7 +332,7 @@ const InstallDnpView: React.FC<InstallDnpViewProps & RouteComponentProps> = ({
         />
       )}
 
-      <Switch>
+      <Routes>
         <Route
           path={match.path}
           exact
@@ -355,10 +356,10 @@ const InstallDnpView: React.FC<InstallDnpViewProps & RouteComponentProps> = ({
           ))}
         {/* Redirect automatically to the first route. DO NOT hardcode 
                 to prevent typos and causing infinite loops */}
-        <Redirect to={`${match.url}/${availableRoutes[0].subPath}`} />
-      </Switch>
+        <Navigate to={`${match.url}/${availableRoutes[0].subPath}`} />
+      </Routes>
     </>
   );
 };
 
-export default withRouter(InstallDnpView);
+export default useNavigate(InstallDnpView);

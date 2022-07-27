@@ -4,6 +4,10 @@ import { MdUnfoldMore, MdUnfoldLess } from "react-icons/md";
 // Styles
 import "./readMore.scss";
 
+interface Props {
+  children: React.ReactNode;
+}
+
 /**
  * Fully responsive text box with a Read More label
  * It subscribes to the window size in order to show
@@ -14,7 +18,7 @@ import "./readMore.scss";
  * Which limits the height of the component to 1px extra
  * to the height of 4 lines in default font size.
  */
-const ReadMore: React.FC = ({ children }) => {
+const ReadMore: React.FC<Props> = ({ children }) => {
   const [readMore, setReadMore] = useState(false);
   const [showReadMore, setShowReadMore] = useState(false);
   const readMoreEl = useRef<HTMLDivElement>(null);
