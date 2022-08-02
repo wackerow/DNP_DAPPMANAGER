@@ -71,6 +71,8 @@ const InstallDnpView: React.FC<InstallDnpViewProps & RouteComponentProps> = ({
     metadata.warnings?.onMinorUpdate ||
     metadata.warnings?.onPatchUpdate;
   const isCore = metadata.type === "dncore";
+  const selectableDependencies = dnp.selectableDependencies as string[];
+  const hasSelectableDependencies = !isEmpty(selectableDependencies);
   const permissions = dnp.specialPermissions;
   const hasPermissions = Object.values(permissions).some(p => p.length > 0);
   const requiresCoreUpdate = dnp.compatible.requiresCoreUpdate;
@@ -190,6 +192,7 @@ const InstallDnpView: React.FC<InstallDnpViewProps & RouteComponentProps> = ({
 
   const disableInstallation = !isEmpty(progressLogs) || requiresCoreUpdate;
 
+  const selectableDependenciesSubPath = "selectableDependencies";
   const setupSubPath = "setup";
   const permissionsSubPath = "permissions";
   const warningsSubPath = "warnings";
@@ -201,6 +204,11 @@ const InstallDnpView: React.FC<InstallDnpViewProps & RouteComponentProps> = ({
     subPath: string;
     render?: () => React.ComponentType<any> | React.ReactElement<any>;
   }[] = [
+    {
+      name: "Selectable dependencies",
+      subPath: selectableDependenciesSubPath,
+      render: () => {}
+    },
     {
       name: "Setup",
       subPath: setupSubPath,
