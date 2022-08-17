@@ -145,6 +145,7 @@ export function getNsupdateTxts({
     const fullEns = getContainerDomain(container);
     eth[getMyDotEthdomain(fullEns)] = container.ip;
     dappnode[getDotDappnodeDomain(container)] = container.ip;
+    // Add HTTPS domains aliases if any
 
     // For multi-service DNPs, link the main container to the root URL
     if (container.isMain) {
