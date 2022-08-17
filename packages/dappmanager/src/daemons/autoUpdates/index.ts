@@ -26,21 +26,21 @@ async function checkAutoUpdates(): Promise<void> {
     // Do it once and return for expected errors to reduce cluttering
     try {
       await releaseFetcher.getProvider();
+
+      try {
+        await checkNewPackagesVersion(releaseFetcher);
+      } catch (e) {
+        logs.error("Error on updateMyPackages", e);
+      }
+
+      try {
+        await checkSystemPackagesVersion();
+      } catch (e) {
+        logs.error("Error on updateSystemPackages", e);
+      }
     } catch (e) {
       if (e instanceof EthProviderError) return;
       logs.warn("Error getting eth provider", e);
-    }
-
-    try {
-      await checkNewPackagesVersion(releaseFetcher);
-    } catch (e) {
-      logs.error("Error on updateMyPackages", e);
-    }
-
-    try {
-      await checkSystemPackagesVersion();
-    } catch (e) {
-      logs.error("Error on updateSystemPackages", e);
     }
   } catch (e) {
     logs.error("Error on autoUpdates interval", e);
