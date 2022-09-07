@@ -15,7 +15,8 @@
     "lint": "eslint . --ext .ts --fix",
     "prettier": "prettier --write 'src/**/*.*' 'test/**/*.*'",
     "pre-commit": "npm run build && npm run test",
-    "clean": "rm -rf DNCORE/ dnp_repo/ .temp-transfer/ cache/ dist/"
+    "clean": "rm -rf DNCORE/ dnp_repo/ .temp-transfer/ cache/ dist/",
+    "pm": "tsc -w --preserveWatchOutput"
   },
   "license": "GPL-3.0",
   "dependencies": {

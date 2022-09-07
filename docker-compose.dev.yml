@@ -1,0 +1,43 @@
+version: "3.5"
+networks:
+  dncore_network:
+    name: dncore_network
+volumes:
+  dappmanagerdnpdappnodeeth_data: {}
+services:
+  dappmanager.dnp.dappnode.eth:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile.dev
+    image: "dappmanager.dnp.dappnode.eth:0.2.41"
+    container_name: DAppNodeCore-dappmanager.dnp.dappnode.eth
+    restart: always
+    volumes: &appvolumes
+      - ./:/app
+    environment: &appenv
+      - LOG_LEVEL=info
+      - ETH_MAINNET_RPC_URL_OVERRIDE=
+      - ETH_MAINNET_RPC_URL_REMOTE=
+      - IPFS_HOST=
+      - DISABLE_UPNP=
+    dns: 172.33.1.2
+    networks:
+      dncore_network:
+        ipv4_address: 172.33.1.7
+        aliases:
+          - dappmanager.dappnode
+          - my.dappnode
+          - dappnode.local
+    logging:
+      driver: journald
+
+  app_watcher:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile.dev
+    depends_on:
+      - dappmanager.dnp.dappnode.eth
+    restart: always
+    volumes: *appvolumes
+    environment: *appenv
+    command: ["pm2-runtime", "start", "ecosystem.config.js", "--only=app-watcher"]
