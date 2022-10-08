@@ -45,15 +45,16 @@ export function getNetworkStakerPkgs(network: Network): {
         execClients: [
           { dnpName: "geth.dnp.dappnode.eth", minVersion: "" },
           { dnpName: "nethermind.public.dappnode.eth", minVersion: "" },
-          { dnpName: "erigon.dnp.dappnode.eth", minVersion: "" }
-          //"besu.dnp.dappnode.eth",
+          { dnpName: "erigon.dnp.dappnode.eth", minVersion: "" },
+          { dnpName: "besu.dnp.dappnode.eth", minVersion: ""} 
         ],
         currentExecClient: db.executionClientMainnet.get(),
         consClients: [
           { dnpName: "prysm.dnp.dappnode.eth", minVersion: "" },
           { dnpName: "lighthouse.dnp.dappnode.eth", minVersion: "" },
           { dnpName: "teku.dnp.dappnode.eth", minVersion: "" },
-          { dnpName: "nimbus.dnp.dappnode.eth", minVersion: "" }
+          { dnpName: "nimbus.dnp.dappnode.eth", minVersion: "" },
+          { dnpName: "lodestar.dnp.dappnode.eth", minVersion: "" }
         ],
         currentConsClient: db.consensusClientMainnet.get(),
         web3signer: {
@@ -76,7 +77,8 @@ export function getNetworkStakerPkgs(network: Network): {
             minVersion: ""
           },
           { dnpName: "lighthouse-gnosis.dnp.dappnode.eth", minVersion: "" },
-          { dnpName: "teku-gnosis.dnp.dappnode.eth", minVersion: "" }
+          { dnpName: "teku-gnosis.dnp.dappnode.eth", minVersion: "" },
+          { dnpName: "lodestar-gnosis.dnp.dappnode.eth", minVersion: "" }
           //"nimbus-gnosis.dnp.dappnode.eth"
         ],
         currentConsClient: db.consensusClientGnosis.get(),
@@ -95,7 +97,8 @@ export function getNetworkStakerPkgs(network: Network): {
           {
             dnpName: "goerli-nethermind.dnp.dappnode.eth",
             minVersion: "1.0.1"
-          }
+          },
+          { dnpName: "goerli-besu.dnp.dappnode.eth", minVersion: "0.1.0" }
         ],
         currentExecClient: db.executionClientPrater.get(),
         consClients: [
@@ -105,7 +108,8 @@ export function getNetworkStakerPkgs(network: Network): {
             minVersion: "0.1.9"
           },
           { dnpName: "teku-prater.dnp.dappnode.eth", minVersion: "0.1.10" },
-          { dnpName: "nimbus-prater.dnp.dappnode.eth", minVersion: "0.1.7" }
+          { dnpName: "nimbus-prater.dnp.dappnode.eth", minVersion: "0.1.7" },
+          { dnpName: "lodestar-prater.dnp.dappnode.eth", minVersion: "0.1.7" }
         ],
         currentConsClient: db.consensusClientPrater.get(),
         web3signer: {
