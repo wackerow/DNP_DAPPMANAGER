@@ -109,7 +109,7 @@ export function getNetworkStakerPkgs(network: Network): {
           },
           { dnpName: "teku-prater.dnp.dappnode.eth", minVersion: "0.1.10" },
           { dnpName: "nimbus-prater.dnp.dappnode.eth", minVersion: "0.1.7" },
-          { dnpName: "lodestar-prater.dnp.dappnode.eth", minVersion: "0.1.7" }
+          { dnpName: "lodestar-prater.dnp.dappnode.eth", minVersion: "0.1.0" }
         ],
         currentConsClient: db.consensusClientPrater.get(),
         web3signer: {
