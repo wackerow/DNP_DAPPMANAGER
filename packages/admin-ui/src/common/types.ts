@@ -767,7 +767,7 @@ export type DistributedFileSource = "ipfs" | "swarm";
 export interface DistributedFile {
   hash: string;
   source: DistributedFileSource;
-  size: number;
+  size?: number;
 }
 
 export interface ReleaseWarnings {
